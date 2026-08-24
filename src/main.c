@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "expand.h"
 #include "builtin.h"
+#include "executor.h"
 
 int main(void)
 {
@@ -25,28 +26,39 @@ int main(void)
             continue;
         }
 
-        if (strcmp(input, "exit") == 0) {
-            free(input);
-            printf("Exiting...\n");
-            break;
-        }
-
         add_history(input);
 
         int count = 0;
         Token *tokens = tokenize(input, &count);
 
-        if (tokens != NULL) {
-
-            expand_tokens(tokens, count);
-
-            Parser parser;
-            parser_init(&parser, tokens, count);
-            parser_parse(&parser);
-
-            free_tokens(tokens, count);
+        if (tokens == NULL) {
+            free(input);
+            continue;
         }
 
+        expand_tokens(tokens, count);
+
+        char *argv[128];
+        int argc = 0;
+
+        for (int i = 0; i < count && argc < 127; i++) {
+            if (tokens[i].type != TOKEN_WORD)
+                break;
+
+            argv[argc++] = tokens[i].value;
+        }
+
+        argv[argc] = NULL;
+
+        if (argc > 0) {
+            if (is_builtin(argv[0])) {
+                execute_builtin(argv);
+            } else {
+                execute_external(argv);
+            }
+        }
+
+        free_tokens(tokens, count);
         free(input);
     }
 
