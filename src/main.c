@@ -3,7 +3,10 @@
 #include <string.h>
 #include <readline/readline.h>
 
+#include "history.h"
 #include "lexer.h"
+#include "parser.h"
+#include "expand.h"
 
 int main(void)
 {
@@ -15,37 +18,30 @@ int main(void)
     printf("================================\n");
 
     while ((input = readline("shellforge$ ")) != NULL) {
-
-        if (input[0] == '\0') {
+        if (strlen(input) == 0) {
             free(input);
             continue;
         }
 
         if (strcmp(input, "exit") == 0) {
-            printf("Exiting...\n");
             free(input);
+            printf("Exiting...\n");
             break;
         }
 
-        Lexer lexer;
-        lexer_init(&lexer, input);
+        add_history(input);
 
-        int index = 0;
+        int count = 0;
+        Token *tokens = tokenize(input, &count);
 
-        while (1) {
-            Token token = lexer_next_token(&lexer);
+        if (tokens != NULL) {
+            expand_tokens(tokens, count);
 
-            printf("%d : %-18s %s\n",
-                   index,
-                   token_type_name(token.type),
-                   token.value);
+            Parser parser;
+            parser_init(&parser, tokens, count);
+            parser_parse(&parser);
 
-            free(token.value);
-
-            index++;
-
-            if (token.type == TOKEN_END)
-                break;
+            free_tokens(tokens, count);
         }
 
         free(input);
