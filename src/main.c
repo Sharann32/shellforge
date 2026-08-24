@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <readline/readline.h>
-#include "history.h"
+
+#include "lexer.h"
 
 int main(void)
 {
@@ -11,43 +12,44 @@ int main(void)
     printf("================================\n");
     printf("          Shellforge\n");
     printf("   A Unix Style Shell written in C\n");
-    printf("================================\n\n");
+    printf("================================\n");
 
-    while (1)
-    {
-        input = readline("shellforge$ ");
+    while ((input = readline("shellforge$ ")) != NULL) {
 
-        if (input == NULL)
-        {
-            printf("\nExiting...\n");
-            break;
-        }
-
-        if (strlen(input) == 0)
-        {
+        if (input[0] == '\0') {
             free(input);
             continue;
         }
 
-        printf("YOU ENTERED: %s\n", input);
-
-        add_history(input);
-
-        if (strcmp(input, "history") == 0)
-        {
-            print_history();
-        }
-        else if (strcmp(input, "exit") == 0)
-        {
-            free(input);
+        if (strcmp(input, "exit") == 0) {
             printf("Exiting...\n");
+            free(input);
             break;
+        }
+
+        Lexer lexer;
+        lexer_init(&lexer, input);
+
+        int index = 0;
+
+        while (1) {
+            Token token = lexer_next_token(&lexer);
+
+            printf("%d : %-18s %s\n",
+                   index,
+                   token_type_name(token.type),
+                   token.value);
+
+            free(token.value);
+
+            index++;
+
+            if (token.type == TOKEN_END)
+                break;
         }
 
         free(input);
     }
-
-    free_history();
 
     return 0;
 }

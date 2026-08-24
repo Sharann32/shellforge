@@ -4,7 +4,7 @@ LDFLAGS = -lreadline
 
 TARGET = shellforge
 
-SRC = src/main.c src/history.c
+SRC = src/main.c src/history.c src/token.c src/lexer.c
 OBJ = $(SRC:.c=.o)
 
 all: $(TARGET)
@@ -17,3 +17,4 @@ src/%.o: src/%.c
 
 clean:
 	rm -f $(OBJ) $(TARGET)
+  
