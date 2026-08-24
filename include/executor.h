@@ -3,7 +3,6 @@
 
 #include "parser.h"
 
-int execute_external(char **argv);
-int execute_command(Command *cmd);
+int execute_command(Command *command);
 
 #endif

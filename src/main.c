@@ -38,29 +38,24 @@ int main(void)
 
         expand_tokens(tokens, count);
 
-        char *argv[128];
-        int argc = 0;
+        Command command;
 
-        for (int i = 0; i < count && argc < 127; i++) {
-            if (tokens[i].type != TOKEN_WORD)
-                break;
+        if (parse_command(tokens, count, &command) == 0) {
 
-            argv[argc++] = tokens[i].value;
-        }
-
-        argv[argc] = NULL;
-
-        if (argc > 0) {
-            if (is_builtin(argv[0])) {
-                execute_builtin(argv);
+            if (is_builtin(command.argv[0])) {
+                execute_builtin(command.argv);
             } else {
-                execute_external(argv);
+                execute_command(&command);
             }
+
+            free_command(&command);
         }
 
         free_tokens(tokens, count);
         free(input);
     }
+
+    printf("Exiting...\n");
 
     return 0;
 }
