@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "expand.h"
+#include "builtin.h"
 
 int main(void)
 {
@@ -18,6 +19,7 @@ int main(void)
     printf("================================\n");
 
     while ((input = readline("shellforge$ ")) != NULL) {
+
         if (strlen(input) == 0) {
             free(input);
             continue;
@@ -35,6 +37,7 @@ int main(void)
         Token *tokens = tokenize(input, &count);
 
         if (tokens != NULL) {
+
             expand_tokens(tokens, count);
 
             Parser parser;
