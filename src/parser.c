@@ -97,6 +97,40 @@ int parse_command(Token *tokens, int count, Command *command)
     return command->argc > 0 ? 0 : -1;
 }
 
+int parse_pipeline(Token *tokens, int count,
+                   Command *commands, int *command_count)
+{
+    if (tokens == NULL || commands == NULL || command_count == NULL)
+        return -1;
+
+    int start = 0;
+    int cmd_count = 0;
+
+    for (int i = 0; i <= count; i++) {
+
+        if (i == count || tokens[i].type == TOKEN_PIPE) {
+
+            if (i == start)
+                return -1;
+
+            if (cmd_count >= 16)
+                return -1;
+
+            if (parse_command(&tokens[start],
+                              i - start,
+                              &commands[cmd_count]) != 0)
+                return -1;
+
+            cmd_count++;
+            start = i + 1;
+        }
+    }
+
+    *command_count = cmd_count;
+
+    return cmd_count > 0 ? 0 : -1;
+}
+
 void free_command(Command *command)
 {
     if (command == NULL)

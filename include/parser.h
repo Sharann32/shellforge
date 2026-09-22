@@ -26,6 +26,10 @@ void parser_init(Parser *parser, Token *tokens, int count);
 void parser_parse(Parser *parser);
 
 int parse_command(Token *tokens, int count, Command *command);
+
+int parse_pipeline(Token *tokens, int count,
+                   Command *commands, int *command_count);
+
 void free_command(Command *command);
 
 #endif

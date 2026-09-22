@@ -83,3 +83,67 @@ int execute_command(Command *command)
 
     return -1;
 }
+
+int execute_pipeline(Command *commands, int command_count)
+{
+    if (commands == NULL || command_count < 2)
+        return -1;
+
+    int pipes[command_count - 1][2];
+    pid_t pids[command_count];
+
+    for (int i = 0; i < command_count - 1; i++) {
+
+        if (pipe(pipes[i]) < 0) {
+            perror("pipe");
+            return -1;
+        }
+    }
+
+    for (int i = 0; i < command_count; i++) {
+
+        pids[i] = fork();
+
+        if (pids[i] < 0) {
+            perror("fork");
+            return -1;
+        }
+
+        if (pids[i] == 0) {
+
+            if (i > 0) {
+                if (dup2(pipes[i - 1][0], STDIN_FILENO) < 0) {
+                    perror("dup2");
+                    _exit(EXIT_FAILURE);
+                }
+            }
+
+            if (i < command_count - 1) {
+                if (dup2(pipes[i][1], STDOUT_FILENO) < 0) {
+                    perror("dup2");
+                    _exit(EXIT_FAILURE);
+                }
+            }
+
+            for (int j = 0; j < command_count - 1; j++) {
+                close(pipes[j][0]);
+                close(pipes[j][1]);
+            }
+
+            execvp(commands[i].argv[0], commands[i].argv);
+
+            perror(commands[i].argv[0]);
+            _exit(EXIT_FAILURE);
+        }
+    }
+
+    for (int i = 0; i < command_count - 1; i++) {
+        close(pipes[i][0]);
+        close(pipes[i][1]);
+    }
+
+    for (int i = 0; i < command_count; i++)
+        waitpid(pids[i], NULL, 0);
+
+    return 0;
+}

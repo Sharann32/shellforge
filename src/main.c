@@ -10,6 +10,8 @@
 #include "builtin.h"
 #include "executor.h"
 
+#define MAX_COMMANDS 16
+
 int main(void)
 {
     char *input;
@@ -38,17 +40,45 @@ int main(void)
 
         expand_tokens(tokens, count);
 
-        Command command;
+        int has_pipe = 0;
 
-        if (parse_command(tokens, count, &command) == 0) {
+        for (int i = 0; i < count; i++) {
+            if (tokens[i].type == TOKEN_PIPE) {
+                has_pipe = 1;
+                break;
+            }
+        }
 
-            if (is_builtin(command.argv[0])) {
-                execute_builtin(command.argv);
+        if (has_pipe) {
+
+            Command commands[MAX_COMMANDS];
+            int command_count = 0;
+
+            if (parse_pipeline(tokens, count,
+                               commands, &command_count) == 0) {
+
+                execute_pipeline(commands, command_count);
+
+                for (int i = 0; i < command_count; i++)
+                    free_command(&commands[i]);
+
             } else {
-                execute_command(&command);
+                fprintf(stderr, "Invalid pipeline\n");
             }
 
-            free_command(&command);
+        } else {
+
+            Command command;
+
+            if (parse_command(tokens, count, &command) == 0) {
+
+                if (is_builtin(command.argv[0]))
+                    execute_builtin(command.argv);
+                else
+                    execute_command(&command);
+
+                free_command(&command);
+            }
         }
 
         free_tokens(tokens, count);
